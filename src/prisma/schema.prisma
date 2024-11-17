@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String         @unique
+  name         String
+  email        String         @unique
+  photo        String
+  Customer     Customer[]
+  Notification Notification[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+model Customer {
+  id               String             @id @default(cuid())
+  name             String
+  email            String             @unique
+  createdBy        String
+  totalVisits      Int                @default(1)
+  lastVisit        DateTime           @default(now())
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  orders           Order[]
+  User             User               @relation(fields: [createdBy], references: [id])
+  Audience         Audience?          @relation(fields: [audienceId], references: [id])
+  audienceId       String?
+  CommunicationLog CommunicationLog[]
+}
+
+model Order {
+  id         String   @id @default(cuid())
+  itemName   String
+  quantity   Int
+  total      Float
+  customerId String
+  createdBy  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customer   Customer @relation(fields: [customerId], references: [id])
+}
+
+model Audience {
+  id        String     @id @default(cuid())
+  createdBy String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  customers Customer[]
+  Campaign  Campaign[]
+}
+
+model Campaign {
+  id         String   @id @default(cuid())
+  name       String
+  message    String
+  status     String   @default("not started")
+  audienceId String
+  createdBy  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  Audience   Audience @relation(fields: [audienceId], references: [id])
+}
+
+model CommunicationLog {
+  id          String   @id @default(cuid())
+  customerId  String
+  campaignId  String
+  vendorMsgId String
+  status      String
+  createdBy   String
+  createdAt   DateTime @default(now())
+  Customer    Customer @relation(fields: [customerId], references: [id])
+}
